@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false });
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), { ssr: false });
+const HyperbolicGraph = dynamic(() => import("./HyperbolicGraph"), { ssr: false });
 
 interface NodeWithCoords extends GraphNode {
   x?: number;
@@ -17,7 +18,7 @@ interface NodeWithCoords extends GraphNode {
 }
 
 export default function AttackSurfaceGraph() {
-  const [mode, setMode] = useState<"2d" | "3d">("3d");
+  const [mode, setMode] = useState<"2d" | "3d" | "hyp">("3d");
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -88,7 +89,7 @@ export default function AttackSurfaceGraph() {
           Attack Surface Graph
         </h2>
         <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
-          {(["3d", "2d"] as const).map((m) => (
+          {(["3d", "2d", "hyp"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
@@ -97,8 +98,9 @@ export default function AttackSurfaceGraph() {
                   ? "bg-red-600 text-white"
                   : "text-slate-400 hover:text-white"
               }`}
+              title={m === "hyp" ? "Hyperbolic (Poincaré disk)" : undefined}
             >
-              {m.toUpperCase()}
+              {m === "hyp" ? "HYP" : m.toUpperCase()}
             </button>
           ))}
         </div>
@@ -117,10 +119,9 @@ export default function AttackSurfaceGraph() {
             nodeThreeObject={nodeThreeObject}
             nodeThreeObjectExtend={true}
           />
-        ) : (
+        ) : mode === "2d" ? (
           <ForceGraph2D
             {...sharedProps}
-            devicePixelRatio={typeof window !== "undefined" ? window.devicePixelRatio : 1}
             nodeCanvasObjectMode={() => "after"}
             nodeCanvasObject={(node, ctx) => {
               const n = node as NodeWithCoords;
@@ -147,6 +148,8 @@ export default function AttackSurfaceGraph() {
               ctx.fillText(label, x, by + pad);
             }}
           />
+        ) : (
+          <HyperbolicGraph />
         )}
       </div>
 
